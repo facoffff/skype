@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Send Messages</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    /* Full-page background: gradient from blue to violet */
+    body {
+      background: linear-gradient(135deg, #4e54c8, #8f94fb);
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-size: cover;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    /* Wrapper for sidebar and content */
+    .wrapper {
+      display: flex;
+      min-height: 100vh;
+    }
+    /* Sidebar: icon-only initially, expands on hover */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: 60px;
+      background: linear-gradient(135deg, #4e54c8, #8f94fb);
+      overflow: hidden;
+      transition: width 0.5s ease-in-out;
+      z-index: 1000;
+    }
+    .sidebar:hover {
+      width: 220px;
+    }
+    .sidebar .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      color: #fff;
+      transition: all 0.5s ease-in-out;
+      white-space: nowrap;
+    }
+    .sidebar .nav-link i {
+      font-size: 1.5rem;
+    }
+    .sidebar .nav-link span {
+      margin-left: 10px;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+    .sidebar:hover .nav-link span {
+      opacity: 1;
+    }
+    /* Main content */
+    .content {
+      flex: 1;
+      margin-left: 60px;
+      transition: margin-left 0.5s ease-in-out;
+      padding: 20px;
+    }
+    .sidebar:hover ~ .content {
+      margin-left: 220px;
+    }
+    /* Centered container: increased width from 400px to 450px */
+    .center-container {
+      max-width: 450px;
+      margin: auto;
+      padding-top: 20px;
+    }
+    /* Card styles */
+    .card {
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background: #fff;
+    }
+    .form-control, .btn {
+      border-radius: 8px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #4e54c8, #8f94fb);
+      border: none;
+    }
+    /* Hide contacts list initially */
+    .contacts-list {
+      display: none;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeIn 1s;
+    }
+    .alert {
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('main') }}">
+            <i class="bi bi-house-door-fill"></i>
+            <span>Send Messages</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('rubrica') }}">
+            <i class="bi bi-list-ul"></i>
+            <span>Contacts</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('logout') }}">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Logout</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    <!-- Main content -->
+    <div class="content fade-in">
+      <div class="center-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'danger' if category=='error' else category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        <div class="card p-4">
+          <div class="card-body">
+            <h4 class="card-title text-center mb-4">Send Messages</h4>
+            <form method="POST" id="sendMessageForm">
+              {% for group_name, contacts in groups.items() %}
+                {% set group_index = loop.index %}
+                <div class="mb-3">
+                  <div class="form-check">
+                    <input class="form-check-input group-checkbox" type="checkbox" name="groups[]" id="group_{{ group_index }}" value="{{ group_name }}">
+                    <label class="form-check-label" for="group_{{ group_index }}">{{ group_name }}</label>
+                  </div>
+                  <div class="contacts-list ms-4 mt-2" id="contacts_{{ group_index }}">
+                    <p class="mb-2">Select Contacts:</p>
+                    {% for contact in contacts %}
+                      <div class="form-check">
+                        <!-- Display only the alias -->
+                        <input class="form-check-input" type="checkbox" name="contacts[{{ group_name }}][]" id="contact_{{ group_index }}_{{ loop.index }}" value="{{ contact.skype_name }}" checked>
+                        <label class="form-check-label" for="contact_{{ group_index }}_{{ loop.index }}">
+                          {{ contact.alias }}
+                        </label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endfor %}
+              <div class="mb-3">
+                <label for="messaggio" class="form-label">Message to Send</label>
+                <textarea id="messaggio" name="messaggio" class="form-control" rows="4" required></textarea>
+              </div>
+              <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Send Message</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal for cancelling message send -->
+  <div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 12px;">
+        <div class="modal-header">
+          <h5 class="modal-title" id="cancelModalLabel">Sending in Progress</h5>
+        </div>
+        <div class="modal-body">
+          <p>The message will be sent in <span id="countdown">5</span> seconds.</p>
+          <div class="progress">
+            <div id="progressBar" class="progress-bar" role="progressbar" style="width: 100%;"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancelButton" type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      // Show/hide contacts list for each group
+      $(".group-checkbox").change(function(){
+        var index = $(this).attr('id').split('_')[1];
+        if ($(this).is(':checked')) {
+          $("#contacts_" + index).slideDown();
+        } else {
+          $("#contacts_" + index).slideUp();
+        }
+      });
+      $(".group-checkbox:checked").each(function(){
+        var index = $(this).attr('id').split('_')[1];
+        $("#contacts_" + index).show();
+      });
+      
+      // Intercept form submit to show countdown modal
+      $("#sendMessageForm").on("submit", function(e){
+        e.preventDefault();
+        var form = this;
+        $("#cancelModal").modal("show");
+        var countdownTime = 5;
+        $("#countdown").text(countdownTime);
+        $("#progressBar").css("width", "100%");
+        var interval = setInterval(function(){
+          countdownTime--;
+          $("#countdown").text(countdownTime);
+          $("#progressBar").css("width", (countdownTime * 20) + "%");
+          if(countdownTime <= 0) {
+            clearInterval(interval);
+            $("#cancelModal").modal("hide");
+            $("#sendMessageForm").off("submit").submit();
+          }
+        }, 1000);
+        $("#cancelButton").one("click", function(){
+          clearInterval(interval);
+          $("#cancelModal").modal("hide");
+        });
+      });
+      
+      setTimeout(function(){
+        $(".alert").fadeOut("slow");
+      }, 5000);
+    });
+  </script>
+</body>
+</html>

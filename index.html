@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Invio Messaggi Skype</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        label { display: block; margin-top: 1em; }
+        input[type="text"], input[type="password"], textarea { width: 100%; max-width: 400px; padding: 0.5em; }
+        .message { padding: 0.5em; border-radius: 4px; margin-bottom: 1em; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .success { background-color: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <h1>Invia Messaggi Skype</h1>
+
+    <!-- Mostra eventuali messaggi flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="message {{ category }}">
+              <strong>{{ category|capitalize }}:</strong> {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <label for="username">Username Skype:</label>
+        <input type="text" id="username" name="username" required>
+
+        <label for="password">Password Skype:</label>
+        <input type="password" id="password" name="password" required>
+
+        <label for="contatti">Contatti Skype (separati da virgola):</label>
+        <input type="text" id="contatti" name="contatti" required>
+
+        <label for="messaggio">Messaggio da inviare:</label>
+        <textarea id="messaggio" name="messaggio" rows="4" required></textarea>
+
+        <button type="submit">Invia</button>
+    </form>
+</body>
+</html>
